@@ -18,14 +18,12 @@ export default function Auth() {
     }, duration);
   }
 
-
   function validateSignup() {
     if (!email.trim()) {
       showPopup("Email is required", "error");
       return false;
     }
 
-    // simple email regex
     const emailRegex = /\S+@\S+\.\S+/;
     if (!emailRegex.test(email)) {
       showPopup("Enter a valid email address", "error");
@@ -53,52 +51,43 @@ export default function Auth() {
   async function submit() {
     const wasLogin = isLogin;
 
-    // SIGNUP VALIDATION
+    // Validate Signup
     if (!wasLogin) {
-      const ok = validateSignup();
-      if (!ok) return; 
+      if (!validateSignup()) return;
     }
 
     try {
-      let res;
+      const res = await api(`/auth/${wasLogin ? "login" : "signup"}`, "POST", {
+        email,
+        password
+      });
 
-      if (typeof api === "function") {
-        res = await api(`/auth/${wasLogin ? "login" : "signup"}`, "POST", {
-          email,
-          password,
-        });
-      } else {
-        const r = await api.post(`/auth/${wasLogin ? "login" : "signup"}`, {
-          email,
-          password,
-        });
-        res = r?.data ?? r;
-      }
+      console.log("AUTH RESPONSE:", res);
 
-      console.log("Auth response:", res);
-
-      
+      // LOGIN LOGIC
       if (wasLogin) {
+        if (res?.error) {
+          showPopup(res.error, "error");
+          return;
+        }
+
         if (res?.token) {
           showPopup("Login successful!", "success");
+
           setTimeout(() => {
             localStorage.setItem("token", res.token);
             window.location.href = "/dashboard";
           }, 800);
-        } else {
-          showPopup(res?.error || "Login failed", "error");
+
+          return;
         }
+
+        showPopup("Unexpected login response", "error");
         return;
       }
 
-     
-
-      if (res?.error) {
-        showPopup(res.error, "error");
-        return;
-      }
-
-      if (res?.message === "Signup success") {
+      // SIGNUP LOGIC
+      if (res?.success) {
         showPopup("Signup successful! Please login.", "success");
 
         setEmail("");
@@ -109,12 +98,17 @@ export default function Auth() {
         return;
       }
 
-      showPopup("Unexpected response", "error");
-      console.log("DEBUG SIGNUP RESPONSE:", res);
-
+      showPopup("Unexpected signup response", "error");
     } catch (err) {
-      showPopup("Network error", "error");
-      console.error(err);
+      console.error("AUTH ERROR:", err);
+
+      if (err?.data?.error) {
+        showPopup(err.data.error, "error");
+      } else if (err?.message) {
+        showPopup(err.message, "error");
+      } else {
+        showPopup("Network error", "error");
+      }
     }
   }
 

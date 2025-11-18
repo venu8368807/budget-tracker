@@ -11,6 +11,8 @@ import expRoutes from "./routes/expenses.js";
 dotenv.config();
 const app = express();
 
+const PORT = process.env.PORT || 4000;
+
 app.use(cors());
 app.use(express.json());
 
@@ -23,7 +25,7 @@ app.use("/categories", catRoutes);
 app.use("/budgets", budgetRoutes);
 app.use("/expenses", expRoutes);
 
-app.listen(process.env.PORT, () =>
-  console.log("Server running on", process.env.PORT)
-);
-
+// ✔ Correct way
+app.listen(PORT, () => {
+  console.log("Server running on", PORT);
+});
