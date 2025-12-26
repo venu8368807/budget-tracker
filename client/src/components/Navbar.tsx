@@ -1,14 +1,22 @@
 import { Link, useLocation } from "react-router-dom";
+import { useConfirm } from "./ConfirmModal";
 
 export default function Navbar() {
   const location = useLocation();
+  const { askConfirm } = useConfirm();
 
-  function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "/";
+  function handleLogout() {
+    askConfirm({
+      title: "",
+      message: "Are you sure you want to log out?",
+      onConfirm: () => {
+        localStorage.removeItem("token");
+        window.location.href = "/";
+      }
+    });
   }
 
-  const isActive = (path) => location.pathname === path ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-700 hover:text-blue-600";
+  const isActive = (path: string) => location.pathname === path ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-700 hover:text-blue-600";
 
   return (
     <nav className="bg-white shadow-md">
@@ -22,14 +30,12 @@ export default function Navbar() {
           <Link to="/categories" className={`py-2 transition ${isActive("/categories")}`}>
             Categories
           </Link>
-          <Link to="/budgets" className={`py-2 transition ${isActive("/budgets")}`}>
-            Budgets
-          </Link>
+
           <Link to="/reports" className={`py-2 transition ${isActive("/reports")}`}>
             Reports
           </Link>
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
           >
             Logout

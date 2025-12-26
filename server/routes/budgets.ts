@@ -1,11 +1,11 @@
-import express from "express";
+import express, { Response } from "express";
 import Budget from "../models/Budget.js";
-import auth from "../middleware/auth.js";
+import auth, { AuthRequest } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // GET budgets for a specific month/year
-router.get("/", auth, async (req, res) => {
+router.get("/", auth, async (req: AuthRequest, res: Response) => {
   const { month, year } = req.query;
   const list = await Budget.find({
     userId: req.user.id,
@@ -16,7 +16,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 // CREATE budget
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, async (req: AuthRequest, res: Response) => {
   const data = await Budget.create({
     userId: req.user.id,
     categoryId: req.body.categoryId,
@@ -28,7 +28,7 @@ router.post("/", auth, async (req, res) => {
 });
 
 // UPDATE budget
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", auth, async (req: AuthRequest, res: Response) => {
   const budget = await Budget.findByIdAndUpdate(req.params.id, req.body, {
     new: true
   });
@@ -36,7 +36,7 @@ router.put("/:id", auth, async (req, res) => {
 });
 
 // DELETE budget
-router.delete("/:id", auth, async (req, res) => {
+router.delete("/:id", auth, async (req: AuthRequest, res: Response) => {
   await Budget.findByIdAndDelete(req.params.id);
   res.json({ message: "Budget deleted" });
 });

@@ -1,41 +1,56 @@
 import { useState } from "react";
 import { api } from "../api";
+import { useToast } from "./Toast";
 
-export default function ExpenseForm({ isOpen, onClose, categories, onExpenseAdded }) {
+interface Category {
+  _id: string;
+  name: string;
+}
+
+interface ExpenseFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  categories: Category[];
+  onExpenseAdded: () => void;
+}
+
+export default function ExpenseForm({ isOpen, onClose, categories, onExpenseAdded }: ExpenseFormProps) {
   const [categoryId, setCategoryId] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const { showToast } = useToast();
 
   async function submit() {
     if (!categoryId || !amount || !date) {
-      alert("Fill all fields");
+      showToast("Please fill all fields", "error");
       return;
     }
 
-    const res = await api("/expenses", "POST", {
+    const res = await api<any>("/expenses", "POST", {
       categoryId,
       amount: Number(amount),
       date
     });
 
     if (res.error) {
-      alert("Error: " + res.error);
+      showToast("Error: " + res.error, "error");
       return;
     }
 
-    // Show status message
-    const message = res.status === "over_budget"
-      ? `Over budget! Spent: ₹${res.totalSpent} / Budget: ₹${res.budgetAmount}`
-      : `Within budget! Spent: ₹${res.totalSpent} / Budget: ₹${res.budgetAmount}`;
+    // Success! Show toast and close immediately
+    const isOver = res.status === "over_budget";
+    const message = isOver
+      ? `Added! Over budget (₹${res.totalSpent} / ₹${res.budgetAmount})`
+      : `Added! Within budget (₹${res.totalSpent} / ₹${res.budgetAmount})`;
 
-    alert(message);
+    showToast(message, isOver ? "warning" : "success");
 
     // Reset form
     setCategoryId("");
     setAmount("");
     setDate(new Date().toISOString().split("T")[0]);
 
-    // Callback to refresh dashboard
+    // Close and refresh immediately
     onExpenseAdded();
     onClose();
   }

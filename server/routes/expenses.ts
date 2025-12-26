@@ -1,13 +1,13 @@
-import express from "express";
+import express, { Response } from "express";
 import Expense from "../models/Expense.js";
 import Budget from "../models/Budget.js";
 import Category from "../models/Category.js";
-import auth from "../middleware/auth.js";
+import auth, { AuthRequest } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // CREATE EXPENSE - with budget status
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, async (req: AuthRequest, res: Response) => {
   const d = new Date(req.body.date);
   const month = d.getMonth() + 1;
   const year = d.getFullYear();
@@ -50,8 +50,8 @@ router.post("/", auth, async (req, res) => {
 });
 
 // GET MONTHLY EXPENSES
-router.get("/", auth, async (req, res) => {
-  const [year, month] = req.query.month.split("-");
+router.get("/", auth, async (req: AuthRequest, res: Response) => {
+  const [year, month] = (req.query.month as string).split("-");
 
   const list = await Expense.find({
     userId: req.user.id,
@@ -63,7 +63,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 // GET MONTHLY REPORT - spent, budget, remaining per category
-router.get("/report/:monthYear", auth, async (req, res) => {
+router.get("/report/:monthYear", auth, async (req: AuthRequest, res: Response) => {
   const [year, month] = req.params.monthYear.split("-");
 
   // Get all categories for user
