@@ -1,12 +1,18 @@
-const envUrl = import.meta.env.VITE_API_URL;
-// Workaround: If user wrongly sets API_URL to frontend port (5173), force backend (5000)
-export const API = (envUrl && envUrl.includes("5173")) ? "http://localhost:5000" : (envUrl || "http://localhost:5000");
+const API = import.meta.env.VITE_API_URL;
 
-export async function api<T>(path: string, method: "GET" | "POST" | "PUT" | "DELETE" = "GET", body?: any): Promise<T> {
+if (!API) {
+  throw new Error("VITE_API_URL is not defined. Check Render environment variables.");
+}
+
+export async function api<T>(
+  path: string,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+  body?: any
+): Promise<T> {
   const token = localStorage.getItem("token");
 
   const fullUrl = API + path;
-  console.log(`[API REQUEST] ${method} ${fullUrl}`, body ? body : "");
+  console.log(`[API REQUEST] ${method} ${fullUrl}`, body ?? "");
 
   let res: Response;
   try {
@@ -14,9 +20,9 @@ export async function api<T>(path: string, method: "GET" | "POST" | "PUT" | "DEL
       method,
       headers: {
         "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : ""
+        ...(token && { Authorization: `Bearer ${token}` })
       },
-      body: body ? JSON.stringify(body) : null
+      body: body ? JSON.stringify(body) : undefined
     });
   } catch (error) {
     console.error(`[API NETWORK ERROR] ${method} ${path}`, error);
@@ -27,12 +33,7 @@ export async function api<T>(path: string, method: "GET" | "POST" | "PUT" | "DEL
     };
   }
 
-  let data: any;
-  try {
-    data = await res.json();
-  } catch {
-    data = {};
-  }
+  const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
     console.error(`[API ERROR] ${method} ${path} ${res.status}`, data);
@@ -43,6 +44,5 @@ export async function api<T>(path: string, method: "GET" | "POST" | "PUT" | "DEL
     };
   }
 
-  console.log(`[API RESPONSE] ${method} ${path} ${res.status}`, data);
   return data as T;
 }
