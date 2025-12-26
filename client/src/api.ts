@@ -11,7 +11,8 @@ export async function api<T>(
 ): Promise<T> {
   const token = localStorage.getItem("token");
 
-  const fullUrl = API + path;
+  const baseUrl = API.endsWith("/") ? API.slice(0, -1) : API;
+  const fullUrl = baseUrl + path;
   console.log(`[API REQUEST] ${method} ${fullUrl}`, body ?? "");
 
   let res: Response;
